@@ -214,61 +214,57 @@ const PostCard = ({ post, onClick }) => {
   const imageUrl = hasImage ? postData.preview.images[0].source.url.replace(/&amp;/g, '&') : null;
 
   return (
-    <article 
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-      onClick={() => onClick(post)}
-    >
-      {imageUrl && (
-        <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-          <img 
-            src={imageUrl} 
-            alt={postData.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+<article className="bg-white flex rounded-lg shadow border hover:shadow-lg transition-all cursor-pointer" onClick={() => onClick(post)}>
+  {/* Vote section à gauche */}
+  <div className="flex flex-col items-center justify-start px-3 py-4 bg-gray-50 border-r">
+    <ArrowUp className="w-5 h-5 text-gray-500 hover:text-green-500 transition-colors" />
+    <span className="font-medium text-sm text-gray-700">{formatScore(postData.score)}</span>
+    <ArrowDown className="w-5 h-5 text-gray-500 hover:text-red-500 transition-colors" />
+  </div>
+
+  {/* Contenu du post */}
+  <div className="flex-1 p-4">
+    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+      <User className="w-3 h-3" />
+      <span>u/{postData.author}</span>
+      <Clock className="w-3 h-3 ml-2" />
+      <span>{formatTimeAgo(postData.created_utc)}</span>
+      <Hash className="w-3 h-3 ml-2" />
+      <span>r/{postData.subreddit}</span>
+    </div>
+
+    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+      {postData.title}
+    </h2>
+
+    {imageUrl && (
+      <div className="mb-2 rounded overflow-hidden">
+        <img src={imageUrl} alt={postData.title} className="max-h-60 object-contain w-full" />
+      </div>
+    )}
+
+    {postData.selftext && (
+      <p className="text-sm text-gray-700 mb-2">
+        {truncateText(postData.selftext, 200)}
+      </p>
+    )}
+
+    <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+      <div className="flex items-center gap-1">
+        <MessageCircle className="w-4 h-4" />
+        <span>{postData.num_comments} comments</span>
+      </div>
+
+      {postData.url && postData.url !== `https://www.reddit.com${postData.permalink}` && (
+        <div className="flex items-center gap-1 text-blue-600">
+          <ExternalLink className="w-4 h-4" />
+          <span>Link</span>
         </div>
       )}
-      <div className="p-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-          <User className="w-4 h-4" />
-          <span>u/{postData.author}</span>
-          <Clock className="w-4 h-4 ml-2" />
-          <span>{formatTimeAgo(postData.created_utc)}</span>
-          <Hash className="w-4 h-4 ml-2" />
-          <span>r/{postData.subreddit}</span>
-        </div>
-        
-        <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 leading-tight">
-          {postData.title}
-        </h2>
-        
-        {postData.selftext && (
-          <p className="text-gray-600 mb-4 line-clamp-3">
-            {truncateText(postData.selftext)}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 text-sm">
-              <ArrowUp className="w-4 h-4 text-green-500" />
-              <span className="font-medium">{formatScore(postData.score)}</span>
-            </div>
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <MessageCircle className="w-4 h-4" />
-              <span>{postData.num_comments}</span>
-            </div>
-          </div>
-          
-          {postData.url && postData.url !== `https://www.reddit.com${postData.permalink}` && (
-            <div className="flex items-center gap-1 text-sm text-blue-600">
-              <ExternalLink className="w-4 h-4" />
-              <span>External Link</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </article>
+    </div>
+  </div>
+</article>
+
   );
 };
 
@@ -354,7 +350,8 @@ const PostModal = ({ post, onClose, comments, loadingComments }) => {
               </div>
             ) : comments && comments.length > 0 ? (
               <div className="space-y-4">
-                {comments.slice(0, 10).map((comment, index) => (
+                {comments.slice(0, visibleCommentCount).map((comment, index) => (
+
                   <div key={index} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                       <User className="w-4 h-4" />
@@ -371,6 +368,17 @@ const PostModal = ({ post, onClose, comments, loadingComments }) => {
                     </div>
                   </div>
                 ))}
+                {visibleCommentCount < comments.length && (
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => setVisibleCommentCount(prev => prev + 5)}
+                    className="px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 rounded-md"
+                  >
+                    Charger plus de commentaires
+                  </button>
+                </div>
+              )}
+
               </div>
             ) : (
               <p className="text-gray-500 text-center py-8">No comments available</p>
@@ -414,6 +422,8 @@ export default function RedditApp() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [visibleCommentCount, setVisibleCommentCount] = useState(5);
+
 
   // Fetch posts
   const fetchPosts = useCallback(async (category = 'Hot', showLoading = true) => {
@@ -454,6 +464,8 @@ export default function RedditApp() {
       if (data && data[1] && data[1].data && data[1].data.children) {
         const commentData = data[1].data.children.filter(comment => comment.kind === 't1');
         setComments(commentData);
+        setVisibleCommentCount(5);
+
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
