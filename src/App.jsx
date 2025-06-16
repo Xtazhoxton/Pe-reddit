@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom/client';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, fetchPosts, setSubreddit } from './store';
 import { Search } from 'lucide-react';
 import CommentsModal from './CommentsModal';
 
-// Barre de recherche pour changer de subreddit
+// SearchBar: sélection de subreddit
 function SearchBar() {
   const dispatch = useDispatch();
   const [input, setInput] = useState('');
@@ -33,26 +32,33 @@ function SearchBar() {
   );
 }
 
-// Carte de post qui déclenche l'ouverture du modal
+// PostCard: affiche vote, contenu et miniature/full image
 function PostCard({ post, onSelect }) {
+  // Calcule la vraie URL d'image (preview ou lien direct)
+  const imageUrl = post.preview?.images?.[0]?.source?.url
+    ?.replace(/&amp;/g, '&')
+    || (/\.(jpe?g|png|gif)$/i.test(post.url) ? post.url : null);
+
   return (
     <article
       className="flex bg-white rounded shadow mb-6 max-w-2xl mx-auto cursor-pointer hover:shadow-lg transition"
       onClick={() => onSelect(post)}
     >
+      {/* Barre de vote */}
       <div className="flex flex-col items-center px-3 py-4 bg-gray-50 border-r">
         <div className="text-gray-400 hover:text-green-500 cursor-pointer">▲</div>
         <span className="text-sm font-medium text-gray-700">{post.score}</span>
         <div className="text-gray-400 hover:text-red-500 cursor-pointer">▼</div>
       </div>
 
+      {/* Contenu du post */}
       <div className="p-4 flex-1">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h2>
 
-        {post.thumbnail && post.thumbnail.startsWith('http') && (
+        {imageUrl && (
           <div className="my-4">
             <img
-              src={post.thumbnail}
+              src={imageUrl}
               alt={post.title}
               className="w-full h-auto rounded-md object-contain"
             />
@@ -65,7 +71,7 @@ function PostCard({ post, onSelect }) {
   );
 }
 
-// Flux principal qui liste les posts
+// Feed: liste des posts selon le state Redux
 function Feed({ onSelect }) {
   const dispatch = useDispatch();
   const { items, status, error, subreddit } = useSelector(state => state.posts);
@@ -86,7 +92,7 @@ function Feed({ onSelect }) {
   );
 }
 
-// Composant principal de l'app
+// Composant principal App
 export default function App() {
   const [selectedPost, setSelectedPost] = useState(null);
 
@@ -102,6 +108,7 @@ export default function App() {
         <SearchBar />
         <Feed onSelect={setSelectedPost} />
 
+        {/* Modal des commentaires */}
         {selectedPost && (
           <CommentsModal
             post={selectedPost}
