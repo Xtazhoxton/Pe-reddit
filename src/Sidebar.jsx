@@ -3,66 +3,70 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { setSubreddit, fetchPosts } from './store'
 
-const DEFAULT_SUBREDDITS = [
-  'popular',
-  'programming',
-  'javascript',
-  'reactjs',
-  'webdev'
-]
+const SUBREDDITS = ['popular','programming','javascript','reactjs','webdev']
 
-export default function Sidebar() {
+export default function Sidebar({ visible }) {
   const dispatch = useDispatch()
   const [icons, setIcons] = useState({})
 
+  // Au montage, fetch des icônes
   useEffect(() => {
-    // Pour chaque subreddit, on récupère son icône via about.json
-    DEFAULT_SUBREDDITS.forEach((name) => {
+    SUBREDDITS.forEach(name => {
       fetch(`https://www.reddit.com/r/${name}/about.json`)
         .then(res => {
-          if (!res.ok) throw new Error(`404 for ${name}`)
+          if (!res.ok) throw new Error('404')
           return res.json()
         })
-        .then(({ data }) => {
-          // community_icon contient souvent un SVG + url ; fallback sur icon_img
-          const url = data.community_icon || data.icon_img || ''
-          setIcons(prev => ({ ...prev, [name]: url.split('?')[0] }))
+        .then(json => {
+          const url = json.data.icon_img || json.data.community_icon || null
+          setIcons(prev => ({ ...prev, [name]: url }))
         })
         .catch(() => {
-          // en cas d’erreur, on peut laisser vide ou un placeholder
-          setIcons(prev => ({ ...prev, [name]: '' }))
+          // placeholder éventuel
         })
     })
   }, [])
 
-  const handleClick = (sub) => {
-    dispatch(setSubreddit(sub))
-    dispatch(fetchPosts(sub))
-  }
+  if (!visible) return null
 
   return (
-    <aside className="w-64 bg-white border-r h-screen p-4 sticky top-0">
-      <h2 className="text-lg font-semibold mb-4">Subreddits</h2>
-      <ul className="space-y-2">
-        {DEFAULT_SUBREDDITS.map(name => (
+    <nav
+      className="
+        fixed left-0 top-0 h-full w-60
+        bg-white shadow-lg
+        border-r border-gray-200
+        z-20
+        flex flex-col pt-20
+      "
+    >
+      <h2 className="px-4 mb-4 text-lg font-semibold text-gray-700">Subreddits</h2>
+      <ul className="flex-1 overflow-auto">
+        {SUBREDDITS.map(name => (
           <li key={name}>
             <button
-              onClick={() => handleClick(name)}
-              className="flex items-center w-full px-3 py-2 hover:bg-gray-100 rounded transition"
+              onClick={() => {
+                dispatch(setSubreddit(name))
+                dispatch(fetchPosts(name))
+              }}
+              className="
+                w-full flex items-center gap-3
+                px-4 py-2 hover:bg-gray-100 transition
+              "
             >
               {icons[name]
                 ? <img
                     src={icons[name]}
                     alt={`${name} logo`}
-                    className="w-6 h-6 rounded-full mr-3 flex-none"
+                    className="w-6 h-6 rounded-full object-cover"
                   />
-                : <div className="w-6 h-6 bg-gray-200 rounded-full mr-3 flex-none" />
+                : <div className="w-6 h-6 bg-gray-200 rounded-full" />
               }
-              <span className="text-gray-800">r/{name}</span>
+              <span className="text-gray-800 font-medium">r/{name}</span>
             </button>
           </li>
         ))}
       </ul>
-    </aside>
+    </nav>
   )
 }
+

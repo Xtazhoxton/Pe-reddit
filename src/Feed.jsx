@@ -16,7 +16,7 @@ export default function Feed() {
   if (status === 'failed')  return <p className="text-center p-4 text-red-500">{error}</p>;
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
+    <div className="relative z-0 max-w-7xl mx-auto p-4 space-y-6">
       {items.map(post => (
         <PostCard key={post.id} post={post} />
       ))}
