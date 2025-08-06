@@ -13,7 +13,7 @@ export default function AuthorHovercard({ author }) {
   // 1) Fetch des données Reddit quand on hover
   useEffect(() => {
     if (visible && !profile) {
-      fetch(`https://www.reddit.com/user/${author}/about.json`)
+      fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=user/${author}/about`)
         .then(r => r.json())
         .then(json => setProfile(json.data))
         .catch(console.error);

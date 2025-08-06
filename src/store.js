@@ -4,7 +4,7 @@ import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
   async (subreddit = 'popular') => {
-    const res = await fetch(`https://www.reddit.com/r/${subreddit}.json`);
+    const res = await fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=r/${subreddit}`);
     const json = await res.json();
     // on récupère juste la liste de posts (= data.children[].data)
     return json.data.children.map(c => c.data);

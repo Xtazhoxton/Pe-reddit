@@ -9,7 +9,7 @@ export default function CommentsModal({ post, onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`https://www.reddit.com${post.permalink}.json`)
+    fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=${post.permalink}.json`)
       .then(r => r.json())
       .then(data => {
         const raw = data[1]?.data?.children.filter(c => c.kind === 't1') || [];

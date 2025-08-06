@@ -22,7 +22,8 @@ export default function PostCard({ post }) {
     if (!expanded && comments.length === 0) {
       setLoading(true)
       try {
-        const res = await fetch(`https://www.reddit.com${post.permalink}.json`)
+        const res = await fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=${post.permalink}.json`)
+
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
         const rawComments = Array.isArray(data)

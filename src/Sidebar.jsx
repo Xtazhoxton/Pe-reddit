@@ -12,7 +12,7 @@ export default function Sidebar({ visible }) {
   // Au montage, fetch des icônes
   useEffect(() => {
     SUBREDDITS.forEach(name => {
-      fetch(`https://www.reddit.com/r/${name}/about.json`)
+      fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=r/${name}/about`)
         .then(res => {
           if (!res.ok) throw new Error('404')
           return res.json()
