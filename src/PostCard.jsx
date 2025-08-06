@@ -18,27 +18,37 @@ export default function PostCard({ post }) {
     (/\.(jpe?g|png|gif)$/i.test(post.url) ? post.url : null)
   const ratio = post.upvote_ratio ?? 0
 
-  const toggleComments = async () => {
-    if (!expanded && comments.length === 0) {
-      setLoading(true)
-      try {
-        const res = await fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=${post.permalink}.json`)
+const toggleComments = async () => {
+  if (!expanded && comments.length === 0) {
+    setLoading(true);
+    try {
+      const res = await fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=${post.permalink}.json`);
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        const rawComments = Array.isArray(data)
-          ? data[1]?.data?.children.filter(c => c.kind === 't1').map(c => c.data)
-          : []
-        setComments(rawComments)
-      } catch (err) {
-        console.error('Failed to load comments', err)
-        // Optionnel : tu peux set un message d'erreur ici
-      } finally {
-        setLoading(false)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      // Vérifie que les données sont bien une liste et contiennent l'élément attendu
+      if (!Array.isArray(data) || !data[1]?.data?.children) {
+        throw new Error('Structure de données inattendue');
       }
+
+      const rawComments = data[1].data.children
+        .filter(c => c.kind === 't1')
+        .map(c => c.data);
+
+      setComments(rawComments);
+    } catch (err) {
+      console.error('Erreur lors du chargement des commentaires :', err);
+      setComments([]); // pour ne pas afficher d’anciens commentaires par erreur
+    } finally {
+      setLoading(false);
     }
-    setExpanded(v => !v)
   }
+
+  setExpanded(v => !v);
+};
+
 
   return (
     <article className="flex flex-col lg:flex-row bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden ">
