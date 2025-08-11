@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Connexion Reddit...</title>
+</head>
+<body>
+  <p>Connexion en cours... Veuillez patienter.</p>
+
+  <script>
+    // On récupère le fragment après le '#' de l'URL
+    const hashParams = new URLSearchParams(window.location.hash.substr(1));
+    const token = hashParams.get('access_token');
+
+    if (token) {
+      // Sauvegarde du token pour Redux
+      localStorage.setItem('reddit_token', token);
+      console.log("Token Reddit enregistré :", token);
+
+      // Redirection vers l'accueil
+      window.location.href = "/";
+    } else {
+      console.error("Aucun token trouvé dans l'URL");
+      document.body.innerHTML = "<p>Erreur : Impossible de récupérer le token Reddit.</p>";
+    }
+  </script>
+</body>
+</html>

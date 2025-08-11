@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { useSelector } from 'react-redux';
+
 
 export default function AuthorHovercard({ author }) {
   const [profile, setProfile] = useState(null);
@@ -9,16 +11,22 @@ export default function AuthorHovercard({ author }) {
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const triggerRef = useRef();
   const timeoutRef = useRef();
+  const token = useSelector(state => state.posts.token);
 
   // 1) Fetch des données Reddit quand on hover
   useEffect(() => {
-    if (visible && !profile) {
-      fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=user/${author}/about`)
+    if (visible && !profile && token) {
+      fetch(`https://oauth.reddit.com/user/${author}/about`, {
+        headers: {
+          'Authorization': `bearer ${token}`,
+          'User-Agent': 'web:RedditMinimal:v1.0 (by /u/TON_USERNAME)'
+        }
+      })
         .then(r => r.json())
         .then(json => setProfile(json.data))
         .catch(console.error);
     }
-  }, [visible, author, profile]);
+  }, [visible, author, profile, token]);
 
   // 2) Calculer la position du trigger pour placer la carte juste en dessous
   useLayoutEffect(() => {

@@ -1,22 +1,54 @@
 import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// 1) Async thunk pour charger les posts depuis un subreddit
+// 🔹 Slice AUTH pour gérer le token OAuth
+const initialToken = localStorage.getItem('reddit_token') || null;
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: { token: initialToken },
+  reducers: {
+    setToken(state, action) {
+      state.token = action.payload;
+      localStorage.setItem('reddit_token', action.payload);
+    },
+    clearToken(state) {
+      state.token = null;
+      localStorage.removeItem('reddit_token');
+    }
+  }
+});
+
+export const { setToken, clearToken } = authSlice.actions;
+
+// 🔹 Async thunk pour charger les posts depuis un subreddit
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
-  async (subreddit = 'popular') => {
-    const res = await fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=r/${subreddit}`);
+  async (subreddit = 'popular', { getState }) => {
+    const token = getState().auth.token; // ✅ On récupère le token depuis Redux
+    const url = `https://oauth.reddit.com/r/${subreddit}`;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `bearer ${token}`,
+        'User-Agent': 'web:myredditapp:v1.0 (by /u/TonPseudo)'
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`Erreur API Reddit: ${res.status}`);
+    }
+
     const json = await res.json();
-    // on récupère juste la liste de posts (= data.children[].data)
     return json.data.children.map(c => c.data);
   }
 );
 
-// 2) Slice « posts »
+// 🔹 Slice « posts »
 const postsSlice = createSlice({
   name: 'posts',
   initialState: {
     items: [],
-    status: 'idle',    // 'idle' | 'loading' | 'succeeded' | 'failed'
+    status: 'idle',
     error: null,
     subreddit: 'popular'
   },
@@ -44,9 +76,10 @@ const postsSlice = createSlice({
 
 export const { setSubreddit } = postsSlice.actions;
 
-// 3) Création du store
+// 🔹 Création du store
 export const store = configureStore({
   reducer: {
-    posts: postsSlice.reducer
+    posts: postsSlice.reducer,
+    auth: authSlice.reducer // ✅ On ajoute auth ici
   }
 });

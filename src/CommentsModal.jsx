@@ -3,20 +3,30 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useSelector } from 'react-redux';
 
 export default function CommentsModal({ post, onClose }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const token = useSelector(state => state.posts.token);
 
   useEffect(() => {
-    fetch(`https://reddit-proxy-8.vercel.app/api/reddit?path=${post.permalink}.json`)
+    if (!token) return; // On attend que le token soit dispo
+  
+    fetch(`https://oauth.reddit.com${post.permalink}.json`, {
+      headers: {
+        'Authorization': `bearer ${token}`,
+        'User-Agent': 'web:RedditMinimal:v1.0 (by /u/TON_USERNAME)'
+      }
+    })
       .then(r => r.json())
       .then(data => {
         const raw = data[1]?.data?.children.filter(c => c.kind === 't1') || [];
         setComments(raw.map(c => c.data));
       })
+      .catch(console.error)
       .finally(() => setLoading(false));
-  }, [post.permalink]);
+  }, [post.permalink, token]);
 
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-6 overflow-y-auto z-50">
